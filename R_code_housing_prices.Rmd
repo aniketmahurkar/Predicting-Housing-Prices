@@ -1,0 +1,129 @@
+---
+title: "Predicting Housing Prices"
+author: "Aniket"
+date: "April 4, 2017"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+housing <- read.csv("Housing.csv", header = TRUE, sep = ",")
+dim(housing)
+```
+
+
+```{r}
+names(housing)
+```
+
+
+
+```{r}
+par(mfrow=c(2,2))
+
+hist(housing$CRIM)
+hist(housing$ZN)
+hist(housing$INDUS)
+hist(housing$CHAS)
+hist(housing$NOX)
+hist(housing$RM)
+hist(housing$AGE)
+hist(housing$DIS)
+hist(housing$RAD)
+hist(housing$TAX)
+hist(housing$PTRATIO)
+hist(housing$B)
+hist(housing$LSTAT)
+hist(housing$MEDV)
+```
+
+temmm... 
+
+```{r}
+model_house <- lm(MEDV~CRIM+ZN+INDUS+CHAS+NOX+RM+AGE+DIS+RAD+TAX+PTRATIO+B+LSTAT, data = housing)
+summary(model_house)
+library(car)
+vif(model_house)
+
+```
+
+install.pac
+model_1
+```{r}
+model_house <- lm(MEDV~CRIM+ZN+INDUS+CHAS+NOX+RM+AGE+DIS+RAD+TAX+PTRATIO+B+LSTAT, data = housing)
+summary(model_house)
+library("car")
+vif(model_house)
+```
+
+
+model 2
+```{r}
+#model2 - removing ZN, INDUS, AGE, TAX
+model_house <- lm(MEDV~CRIM+ZN+CHAS+NOX+RM+DIS+RAD+PTRATIO+B+LSTAT, data = housing)
+summary(model_house)
+library("car")
+vif(model_house)
+qqnorm(model_house$residuals)
+qqline(model_house$residuals)
+```
+
+model 3
+
+
+``` {r}
+#try transformation
+boxCox(model_house, lambda = seq(-.1,.2,1/10))
+
+#model3
+housing$MEDV_tran <- housing$MEDV^0.12
+model_house <- lm(MEDV_tran~CRIM+ZN+CHAS+NOX+RM+DIS+RAD+PTRATIO+B+LSTAT, data = housing)
+summary(model_house)
+library("car")
+vif(model_house)
+qqnorm(model_house$residuals)
+qqline(model_house$residuals)
+
+```
+
+
+model 4
+
+```{r}
+
+#Preperation for model4
+press_reg <- model_house$residuals / (1 - lm.influence(model_house)$hat)
+press_reg_std = press_reg / sd(press_reg)  
+housing <- housing[-which(press_reg_std > 3 | press_reg_std < -3),]
+dim(housing)
+#model4
+model_house <- lm(MEDV_tran~CRIM+CHAS+NOX+RM+DIS+RAD+PTRATIO+B+LSTAT, data = housing)
+summary(model_house)
+library("car")
+vif(model_house)
+qqnorm(model_house$residuals)
+qqline(model_house$residuals)
+
+```
+
+Standard
+
+```{r}
+#standardizing the model
+housing_standard=apply(housing,2,function(x){ ( x-mean(x) )/sd(x) })
+housing_standard=as.data.frame(housing_standard)
+model_house_std <- lm(MEDV_tran~CRIM+CHAS+NOX+RM+DIS+RAD+PTRATIO+B+LSTAT, data = housing_standard)
+summary(model_house_std)
+barplot(model_house_std$coef)
+```
+
